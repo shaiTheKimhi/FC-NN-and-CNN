@@ -82,7 +82,8 @@ class LeakyReLU(Layer):
 
         # TODO: Implement the LeakyReLU operation.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        x_negative = float(self.alpha) * x
+        out = torch.where(x>0, x, x_negative)
         # ========================
 
         self.grad_cache["x"] = x
@@ -97,7 +98,7 @@ class LeakyReLU(Layer):
 
         # TODO: Implement gradient w.r.t. the input x
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        dx = torch.where(x>0,1.0,float(self.alpha)) * dout
         # ========================
 
         return dx
@@ -116,7 +117,7 @@ class ReLU(LeakyReLU):
 
     def __init__(self):
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        super().__init__(alpha = 0)
         # ========================
 
     def __repr__(self):
@@ -142,7 +143,9 @@ class Sigmoid(Layer):
         # TODO: Implement the Sigmoid function.
         #  Save whatever you need into grad_cache.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        out = 1/(1+torch.exp(-x))
+        #self.grad_cache["x"] = x
+        self.grad_cache["sigmoid"] = out
         # ========================
 
         return out
@@ -155,9 +158,9 @@ class Sigmoid(Layer):
 
         # TODO: Implement gradient w.r.t. the input x
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        sigmoid = self.grad_cache["sigmoid"]
+        dx = sigmoid * (1-sigmoid) * dout
         # ========================
-
         return dx
 
     def params(self):
@@ -183,7 +186,9 @@ class TanH(Layer):
         # TODO: Implement the tanh function.
         #  Save whatever you need into grad_cache.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        out = (torch.exp(x) - torch.exp(-x))/(torch.exp(x) + torch.exp(-x))
+        self.grad_cache["tanh"] = out
+
         # ========================
 
         return out
@@ -196,7 +201,9 @@ class TanH(Layer):
 
         # TODO: Implement gradient w.r.t. the input x
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        tanh = self.grad_cache["tanh"]
+        dx = 1 - tanh**2
+        dx = dx * dout
         # ========================
 
         return dx
@@ -224,7 +231,8 @@ class Linear(Layer):
         # Initialize the weights to zero-mean gaussian noise with a standard
         # deviation of `wstd`. Init bias to zero.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        self.b = torch.zeros([out_features,])
+        self.w = torch.normal(mean=0, std=torch.ones([out_features,in_features])*wstd)
         # ========================
 
         # These will store the gradients
@@ -244,9 +252,8 @@ class Linear(Layer):
 
         # TODO: Compute the affine transform
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        out = torch.mm(x,self.w.T) + self.b
         # ========================
-
         self.grad_cache["x"] = x
         return out
 
@@ -263,7 +270,9 @@ class Linear(Layer):
         #   - db, the gradient of the loss with respect to b
         #  Note: You should ACCUMULATE gradients in dw and db.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        dx = torch.mm(dout, self.w)
+        self.dw += torch.mm(dout.T,x)
+        self.db += sum(dout[:])
         # ========================
 
         return dx
@@ -281,10 +290,8 @@ class CrossEntropyLoss(Layer):
         Computes cross-entropy loss directly from class scores.
         Given class scores x, and a 1-hot encoding of the correct class yh,
         the cross entropy loss is defined as: -yh^T * log(softmax(x)).
-
         This implementation works directly with class scores (x) and labels
         (y), not softmax outputs or 1-hot encodings.
-
         :param x: Tensor of shape (N,D) where N is the batch
             dimension, and D is the number of features. Should contain class
             scores, NOT PROBABILITIES.
@@ -304,7 +311,14 @@ class CrossEntropyLoss(Layer):
         # TODO: Compute the cross entropy loss using the last formula from the
         #  notebook (i.e. directly using the class scores).
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        y = y.unsqueeze(1)
+        m = torch.nn.Softmax(dim=1)
+        my = torch.gather(m(x), 1, y)
+        indices = torch.arange(N)
+        print(x[indices, y].shape)
+        logdist = torch.mm(-y.T * 1.0, torch.log(m(x)[indices][y].unsqueeze(1)))/N
+
+        loss = logdist
         # ========================
 
         self.grad_cache["x"] = x
@@ -430,9 +444,7 @@ class MLP(Layer):
     """
     A simple multilayer perceptron based on our custom Layers.
     Architecture is (with ReLU activation):
-
         FC(in, h1) -> ReLU -> FC(h1,h2) -> ReLU -> ... -> FC(hn, num_classes)
-
     Where FC is a fully-connected layer and h1,...,hn are the hidden layer
     dimensions.
     If dropout is used, a dropout layer is added after every activation
