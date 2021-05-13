@@ -82,7 +82,11 @@ class LeakyReLU(Layer):
 
         # TODO: Implement the LeakyReLU operation.
         # ====== YOUR CODE: ======
+<<<<<<< HEAD
         x_negative = float(self.alpha) * x
+=======
+        x_negative = self.alpha * x
+>>>>>>> b1e246156b8df11ab66d3502106ff9f3b6138011
         out = torch.where(x>0, x, x_negative)
         # ========================
 
@@ -98,7 +102,11 @@ class LeakyReLU(Layer):
 
         # TODO: Implement gradient w.r.t. the input x
         # ====== YOUR CODE: ======
+<<<<<<< HEAD
         dx = torch.where(x>0,1.0,float(self.alpha)) * dout
+=======
+        dx = torch.where(x>0,1,self.alpha)
+>>>>>>> b1e246156b8df11ab66d3502106ff9f3b6138011
         # ========================
 
         return dx
@@ -159,7 +167,11 @@ class Sigmoid(Layer):
         # TODO: Implement gradient w.r.t. the input x
         # ====== YOUR CODE: ======
         sigmoid = self.grad_cache["sigmoid"]
+<<<<<<< HEAD
         dx = sigmoid * (1-sigmoid) * dout
+=======
+        dx = sigmoid * (1-sigmoid)
+>>>>>>> b1e246156b8df11ab66d3502106ff9f3b6138011
         # ========================
         return dx
 
@@ -203,7 +215,10 @@ class TanH(Layer):
         # ====== YOUR CODE: ======
         tanh = self.grad_cache["tanh"]
         dx = 1 - tanh**2
+<<<<<<< HEAD
         dx = dx * dout
+=======
+>>>>>>> b1e246156b8df11ab66d3502106ff9f3b6138011
         # ========================
 
         return dx
@@ -252,7 +267,11 @@ class Linear(Layer):
 
         # TODO: Compute the affine transform
         # ====== YOUR CODE: ======
+<<<<<<< HEAD
         out = torch.mm(x,self.w.T) + self.b
+=======
+        out = torch.mm(x,self.w.T) + b
+>>>>>>> b1e246156b8df11ab66d3502106ff9f3b6138011
         # ========================
         self.grad_cache["x"] = x
         return out
@@ -271,8 +290,13 @@ class Linear(Layer):
         #  Note: You should ACCUMULATE gradients in dw and db.
         # ====== YOUR CODE: ======
         dx = torch.mm(dout, self.w)
+<<<<<<< HEAD
         self.dw += torch.mm(dout.T,x)
         self.db += sum(dout[:])
+=======
+        self.dw += torch.mm(dout,x.T)
+        self.db += dout
+>>>>>>> b1e246156b8df11ab66d3502106ff9f3b6138011
         # ========================
 
         return dx
