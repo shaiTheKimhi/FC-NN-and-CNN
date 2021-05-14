@@ -311,18 +311,18 @@ class CrossEntropyLoss(Layer):
         # TODO: Compute the cross entropy loss using the last formula from the
         #  notebook (i.e. directly using the class scores).
         # ====== YOUR CODE: ======
-        y = y.unsqueeze(1)
-        m = torch.nn.Softmax(dim=1)
-        my = torch.gather(m(x), 1, y)
         indices = torch.arange(N)
-        print(x[indices, y].shape)
-        logdist = torch.mm(-y.T * 1.0, torch.log(m(x)[indices][y].unsqueeze(1)))/N
+        e = torch.exp(x)
+        s = torch.sum(e,1) #sum of exp(xk) for all k classification
 
-        loss = logdist
+        dist = -x[indices,y] + torch.log(s)
+        loss = torch.sum(dist)/N
         # ========================
 
         self.grad_cache["x"] = x
         self.grad_cache["y"] = y
+        self.grad_cache["s"] = s
+        self.grad_cache["e"] = e
         return loss
 
     def backward(self, dout=1.0):
@@ -337,6 +337,14 @@ class CrossEntropyLoss(Layer):
 
         # TODO: Calculate the gradient w.r.t. the input x.
         # ====== YOUR CODE: ======
+        s = self.grad_cache["s"]
+        e = self.grad_cache["e"]
+
+        indices = torch.arange(N)
+        M = e.clone()
+        M =torch.mm(M.T, s.unsqueeze(1))
+        print(s.unsqueeze(1).shape)
+
         raise NotImplementedError()
         # ========================
 
