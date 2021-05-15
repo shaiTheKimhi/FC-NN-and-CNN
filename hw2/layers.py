@@ -98,9 +98,9 @@ class LeakyReLU(Layer):
 
         # TODO: Implement gradient w.r.t. the input x
         # ====== YOUR CODE: ======
-        dx = torch.where(x>0,1.0,float(self.alpha)) * dout
+        print(type(x))
+        dx = torch.where(x>0, dout,dout * self.alpha)
         # ========================
-
         return dx
 
     def params(self):
@@ -313,7 +313,7 @@ class CrossEntropyLoss(Layer):
         # ====== YOUR CODE: ======
         indices = torch.arange(N)
         e = torch.exp(x)
-        s = torch.sum(e,1) #sum of exp(xk) for all k classification
+        sum_exp_xk = torch.sum(e,1) #sum of exp(xk) for all k classification
 
         dist = -x[indices,y] + torch.log(s)
         loss = torch.sum(dist)/N
@@ -321,7 +321,7 @@ class CrossEntropyLoss(Layer):
 
         self.grad_cache["x"] = x
         self.grad_cache["y"] = y
-        self.grad_cache["s"] = s
+        self.grad_cache["sum_exp_xk"] = sum_exp_xk
         self.grad_cache["e"] = e
         return loss
 
@@ -337,17 +337,14 @@ class CrossEntropyLoss(Layer):
 
         # TODO: Calculate the gradient w.r.t. the input x.
         # ====== YOUR CODE: ======
-        s = self.grad_cache["s"]
+        indices = range(N)
+        sum_exp_xk = self.grad_cache["s"]
         e = self.grad_cache["e"]
-
-        indices = torch.arange(N)
-        M = e.clone()
-        M =torch.mm(M.T, s.unsqueeze(1))
-        print(s.unsqueeze(1).shape)
-
-        raise NotImplementedError()
+        dx = e / sum_exp_xk.unsqueeze(1)
+        dx[indices, y] -= 1
+        dx /= N
+        dx *= dout
         # ========================
-
         return dx
 
     def params(self):
