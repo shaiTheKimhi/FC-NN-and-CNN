@@ -98,7 +98,8 @@ class LeakyReLU(Layer):
 
         # TODO: Implement gradient w.r.t. the input x
         # ====== YOUR CODE: ======
-        print(type(x))
+        print(f'x shape: {x.shape}, outshape: {dout.shape}')
+
         dx = torch.where(x>0, dout,dout * self.alpha)
         # ========================
         return dx
@@ -315,7 +316,7 @@ class CrossEntropyLoss(Layer):
         e = torch.exp(x)
         sum_exp_xk = torch.sum(e,1) #sum of exp(xk) for all k classification
 
-        dist = -x[indices,y] + torch.log(s)
+        dist = -x[indices,y] + torch.log(sum_exp_xk)
         loss = torch.sum(dist)/N
         # ========================
 
@@ -338,7 +339,7 @@ class CrossEntropyLoss(Layer):
         # TODO: Calculate the gradient w.r.t. the input x.
         # ====== YOUR CODE: ======
         indices = range(N)
-        sum_exp_xk = self.grad_cache["s"]
+        sum_exp_xk = self.grad_cache["sum_exp_xk"]
         e = self.grad_cache["e"]
         dx = e / sum_exp_xk.unsqueeze(1)
         dx[indices, y] -= 1
@@ -483,9 +484,19 @@ class MLP(Layer):
 
         # TODO: Build the MLP architecture as described.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
-        # ========================
+        D = in_features
+        C = num_classes
+        L = len(hidden_features)
+        active_layer = ReLU() if activation == 'relu' else Sigmoid()
+        pre_h = D
+        for idx in range(L):
+            h = hidden_features[idx]
+            layers.append(Linear(pre_h,h))
+            pre_h = h
+            layers.append(active_layer)
+        layers.append(Linear(h, C))
 
+        # ===========================
         self.sequence = Sequential(*layers)
 
     def forward(self, x, **kw):
