@@ -84,9 +84,9 @@ class LeakyReLU(Layer):
         # ====== YOUR CODE: ======
         x_negative = float(self.alpha) * x
         out = torch.where(x>0, x, x_negative)
-        # ========================
 
-        self.grad_cache["x"] = x
+        # ========================
+        self.grad_cache["x"] = x.clone()
         return out
 
     def backward(self, dout):
@@ -98,9 +98,8 @@ class LeakyReLU(Layer):
 
         # TODO: Implement gradient w.r.t. the input x
         # ====== YOUR CODE: ======
-        print(f'x shape: {x.shape}, outshape: {dout.shape}')
 
-        dx = torch.where(x>0, dout,dout * self.alpha)
+        dx = torch.where(x>0, 1.0,float(self.alpha)) * dout
         # ========================
         return dx
 
@@ -253,9 +252,10 @@ class Linear(Layer):
 
         # TODO: Compute the affine transform
         # ====== YOUR CODE: ======
-        out = torch.mm(x,self.w.T) + self.b
+        x_ = x.clone()
+        out = torch.mm(x_,self.w.T) + self.b
         # ========================
-        self.grad_cache["x"] = x
+        self.grad_cache["x"] = x_
         return out
 
     def backward(self, dout):
@@ -402,7 +402,9 @@ class Sequential(Layer):
         # TODO: Implement the forward pass by passing each layer's output
         #  as the input of the next.
         # ====== YOUR CODE: ======
+
         for layer in self.layers:
+            #input = x.shape
             x = layer(x,**kw)
         out = x
         # ========================
@@ -417,8 +419,10 @@ class Sequential(Layer):
         #  gradient. Behold the backpropagation algorithm in action!
         # ====== YOUR CODE: ======
         din = dout
-        for layer in reversed(self.layers):
-            din = layer.backward(din)
+        layers = tuple(self.layers)
+        for layer in layers[::-1]:
+            temp = layer.backward(din)
+            din  = temp
         # ========================
         return din
 
@@ -487,15 +491,15 @@ class MLP(Layer):
         D = in_features
         C = num_classes
         L = len(hidden_features)
-        active_layer = ReLU() if activation == 'relu' else Sigmoid()
         pre_h = D
+        h = C #if no hidden
         for idx in range(L):
+            active_layer = ReLU() if activation == 'relu' else Sigmoid()
             h = hidden_features[idx]
             layers.append(Linear(pre_h,h))
             pre_h = h
             layers.append(active_layer)
         layers.append(Linear(h, C))
-
         # ===========================
         self.sequence = Sequential(*layers)
 
