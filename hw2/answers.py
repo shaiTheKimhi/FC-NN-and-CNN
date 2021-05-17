@@ -9,16 +9,13 @@ math (delimited with $$).
 # Part 1 answers
 
 part1_q1 = r"""
-**Your answer:**
+1. First, let's denote the FC  layer as $Z = X W^T + b$ and the Jacobian tensor denotes by $\Delta Z$, that is simply W.
+since batch size come usually first, the size of W (the Jacobian tensor) is [N, in_features,out_features]
+in our case `[128 , 1024, 2048]`
 
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
-
+2. The number of parameter of the jacobian w.r.t the input is $128 \times 1024 \times 2048$.
+float32 means 32 bits, and each byte equal to 8 bits,
+means $128 \times 1024 \times 2048 \times 32 / 8 = 1073741824 bytes $ that is about 1.07 GB.
 """
 
 # ==============

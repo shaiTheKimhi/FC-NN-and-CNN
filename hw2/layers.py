@@ -98,8 +98,7 @@ class LeakyReLU(Layer):
 
         # TODO: Implement gradient w.r.t. the input x
         # ====== YOUR CODE: ======
-
-        dx = torch.where(x>0, 1.0,float(self.alpha)) * dout
+        dx = torch.where(x>0, torch.tensor(1.0), torch.tensor(1.0 * self.alpha)) * dout
         # ========================
         return dx
 
@@ -402,9 +401,7 @@ class Sequential(Layer):
         # TODO: Implement the forward pass by passing each layer's output
         #  as the input of the next.
         # ====== YOUR CODE: ======
-
         for layer in self.layers:
-            #input = x.shape
             x = layer(x,**kw)
         out = x
         # ========================
@@ -488,16 +485,18 @@ class MLP(Layer):
 
         # TODO: Build the MLP architecture as described.
         # ====== YOUR CODE: ======
+        # notation like the notebook :)
         D = in_features
         C = num_classes
         L = len(hidden_features)
         pre_h = D
-        h = C #if no hidden
+        h = C #just to use when  no hidden
         for idx in range(L):
-            active_layer = ReLU() if activation == 'relu' else Sigmoid()
             h = hidden_features[idx]
             layers.append(Linear(pre_h,h))
             pre_h = h
+
+            active_layer = ReLU() if activation == 'relu' else Sigmoid()
             layers.append(active_layer)
         layers.append(Linear(h, C))
         # ===========================
