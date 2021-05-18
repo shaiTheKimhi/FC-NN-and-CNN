@@ -251,7 +251,8 @@ class Linear(Layer):
 
         # TODO: Compute the affine transform
         # ====== YOUR CODE: ======
-        x_ = x.clone()
+        x_ = x.clone().view((x.shape[0], -1))
+        #print(f'x shape {x_.shape} w.t shape {self.w.T.shape} bias shape {self.b.shape}')
         out = torch.mm(x_,self.w.T) + self.b
         # ========================
         self.grad_cache["x"] = x_
@@ -314,7 +315,6 @@ class CrossEntropyLoss(Layer):
         indices = torch.arange(N)
         e = torch.exp(x)
         sum_exp_xk = torch.sum(e,1) #sum of exp(xk) for all k classification
-
         dist = -x[indices,y] + torch.log(sum_exp_xk)
         loss = torch.sum(dist)/N
         # ========================

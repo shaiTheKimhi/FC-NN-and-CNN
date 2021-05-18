@@ -67,14 +67,13 @@ class VanillaSGD(Optimizer):
         for p, dp in self.params:
             if dp is None:
                 continue
-            dp += self.reg * p
-            p -= dp * self.learn_rate
 
             # TODO: Implement the optimizer step.
             #  Update the gradient according to regularization and then
             #  update the parameters tensor.
             # ====== YOUR CODE: ======
-
+            dp += self.reg * p
+            p -= dp * self.learn_rate
             # ========================
 
 
