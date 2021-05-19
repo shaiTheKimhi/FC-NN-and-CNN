@@ -39,7 +39,11 @@ def part2_optim_hp():
     # TODO: Tweak the hyperparameters to get the best results you can.
     # You may want to use different learning rates for each optimizer.
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    wstd = 0.05
+    lr_vanilla = 0.05
+    lr_momentum = 0.005#25
+    lr_rmsprop = 0.0001
+    reg = 0.01
     # ========================
     return dict(
         wstd=wstd,
@@ -47,6 +51,9 @@ def part2_optim_hp():
         lr_momentum=lr_momentum,
         lr_rmsprop=lr_rmsprop,
         reg=reg,
+
+
+
     )
 
 
@@ -55,35 +62,32 @@ def part2_dropout_hp():
     # TODO: Tweak the hyperparameters to get the model to overfit without
     # dropout.
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    wstd = 0.5
+    lr = 0.005
     # ========================
     return dict(wstd=wstd, lr=lr)
 
 
 part2_q1 = r"""
-**Your answer:**
-
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
-
+1. Dropout is a regularization method that should generalize better (reduce generalization error)
+by reducing the complexity of the model.
+thus, we expected the model withoud dropout to overfit, and that is what we see as the accuracy of the train goes up while the test stay low.
+The 40% dropout reach lower test loss and looks like indeed overfit less
+2. The higher dropout rate of 80% seems to act like too much of regularization and converge to a high loss.
+this risk of under fitting exist with every regularization that is too strong on the model.
 """
 
 part2_q2 = r"""
-**Your answer:**
+It is possible.
+The accuracy measures count correct samples while the loss measures of the score (probability-like) of how far the correct answer.
+We could "be less certain" about some samples, but still to have the highest score.
+(uncertainty usually measure the softmax output of the correct class)
+or, we could be really wrong in some samples but to achive more correct ones.
 
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
-
+For example,for classes (denote by 0,1,2 etc), lest look at example when $Y= 0$ and the softmax output is [0.4,0.6,0...0].
+that means that $\^{Y} = 1 $, while we can update the weights to have softmax output of [0.3,0.1,0.1,...0] (of course that should sum to 1)
+in that case $\^{Y} = 0 $ so we increase accuracy measure, but loss would be -log(0.3) instead of -log(0.4)
+(please note that the example lake sigmas and talk about one example just to demonstrate the notion)
 """
 # ==============
 

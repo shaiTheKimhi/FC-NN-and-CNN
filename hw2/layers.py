@@ -108,7 +108,6 @@ class LeakyReLU(Layer):
     def __repr__(self):
         return f"LeakyReLU({self.alpha=})"
 
-
 class ReLU(LeakyReLU):
     """
     Rectified linear unit.
@@ -121,7 +120,6 @@ class ReLU(LeakyReLU):
 
     def __repr__(self):
         return "ReLU"
-
 
 class Sigmoid(Layer):
     """
@@ -164,7 +162,6 @@ class Sigmoid(Layer):
 
     def params(self):
         return []
-
 
 class TanH(Layer):
     """
@@ -281,7 +278,6 @@ class Linear(Layer):
     def __repr__(self):
         return f"Linear({self.in_features=}, {self.out_features=})"
 
-
 class CrossEntropyLoss(Layer):
     def __init__(self):
         super().__init__()
@@ -350,7 +346,6 @@ class CrossEntropyLoss(Layer):
     def params(self):
         return []
 
-
 class Dropout(Layer):
     def __init__(self, p=0.5):
         """
@@ -366,7 +361,14 @@ class Dropout(Layer):
         #  Notice that contrary to previous layers, this layer behaves
         #  differently a according to the current training_mode (train/test).
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        self.drop_mask = torch.ones_like(x)
+        if self.training_mode == True:
+            drop_mask = torch.zeros_like(x) + (1 - self.p)
+            drop_mask = torch.bernoulli(drop_mask)
+            out = x * drop_mask
+            self.drop_mask = drop_mask
+        else:
+            out = x
         # ========================
 
         return out
@@ -374,7 +376,7 @@ class Dropout(Layer):
     def backward(self, dout):
         # TODO: Implement the dropout backward pass.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        dx = dout * self.drop_mask
         # ========================
 
         return dx
@@ -498,6 +500,8 @@ class MLP(Layer):
 
             active_layer = ReLU() if activation == 'relu' else Sigmoid()
             layers.append(active_layer)
+            if dropout > 0:
+                layers.append(Dropout(dropout))
         layers.append(Linear(h, C))
         # ===========================
         self.sequence = Sequential(*layers)

@@ -80,7 +80,36 @@ class Trainer(abc.ABC):
             #    save the model to the file specified by the checkpoints
             #    argument.
             # ====== YOUR CODE: ======
-            raise NotImplementedError()
+            #train epoch
+            train_epoch_result = self.train_epoch(dl_train, verbose=verbose, **kw) #epoch_result class
+            loss = (sum(train_epoch_result.losses)/len(train_epoch_result.losses))
+
+            #check if needed
+            if torch.is_tensor(loss):
+                train_loss.append(loss.item())
+            else:
+                train_loss.append(loss)
+            train_acc.append(train_epoch_result.accuracy)
+
+            #test epoch
+            test_epoch_result = self.test_epoch(dl_test, verbose=verbose, **kw)
+            test_loss.append(sum(test_epoch_result.losses) / len(test_epoch_result.losses))
+            test_acc.append(test_epoch_result.accuracy)
+            if actual_num_epochs == 0: #save the first accuracy as best
+                best_acc = test_epoch_result.accuracy
+            actual_num_epochs += 1
+            epochs_without_improvement += 1
+
+            # Checkpoint
+            if checkpoints and test_epoch_result.accuracy > best_acc: #last better then best
+                torch.save(self.model, checkpoints)
+                best_acc = test_epoch_result.accuracy
+                epochs_without_improvement = 0 #reset no improvement
+
+            # Early stopping
+            if early_stopping:
+                if epochs_without_improvement >= early_stopping:
+                    break
             # ========================
 
         return FitResult(actual_num_epochs, train_loss, train_acc, test_loss, test_acc)
@@ -219,7 +248,10 @@ class LayerTrainer(Trainer):
 
         # TODO: Evaluate the Layer model on one batch of data.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        preds = self.model(X)  # Forward- vec of scores
+        loss = self.loss_fn(preds, y=y).item()
+        _, predicted = torch.max(preds, 1)
+        num_correct = torch.eq(y, predicted).sum().item()
         # ========================
 
         return BatchResult(loss, num_correct)
