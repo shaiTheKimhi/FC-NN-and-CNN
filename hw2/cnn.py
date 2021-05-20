@@ -16,17 +16,17 @@ class ConvClassifier(nn.Module):
     """
 
     def __init__(
-        self,
-        in_size,
-        out_classes: int,
-        channels: Sequence[int],
-        pool_every: int,
-        hidden_dims: Sequence[int],
-        conv_params: dict = {},
-        activation_type: str = "relu",
-        activation_params: dict = {},
-        pooling_type: str = "max",
-        pooling_params: dict = {},
+            self,
+            in_size,
+            out_classes: int,
+            channels: Sequence[int],
+            pool_every: int,
+            hidden_dims: Sequence[int],
+            conv_params: dict = {},
+            activation_type: str = "relu",
+            activation_params: dict = {},
+            pooling_type: str = "max",
+            pooling_params: dict = {},
     ):
         """
         :param in_size: Size of input images, e.g. (C,H,W).
@@ -77,8 +77,45 @@ class ConvClassifier(nn.Module):
         #  Note: If N is not divisible by P, then N mod P additional
         #  CONV->ACTs should exist at the end, without a POOL after them.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        """
+        note: it was easier to implement the logic of self._n_features()
+        in here, since we already iterate over the self.channels, thus
+        i simply calculated the h,w and channels of each layer, and return the last one.
+        """
+        # initiate as standart params:
+        padding, stride, kernel_size, pool_kernel_size = 0, 1, 3, 2
+        #load params from dict:
+        if 'padding' in self.conv_params.keys():
+            padding = self.conv_params['padding']
+        if 'stride' in self.conv_params.keys():
+            stride = self.conv_params['stride']
+        if 'kernel_size' in self.conv_params.keys():
+            kernel_size = self.conv_params['kernel_size']
+        if 'kernel_size' in self.pooling_params.keys():
+            p_kernel_size = self.pooling_params['kernel_size']
 
+        #update the output_size regards to conv and pooling\
+        update_conv_size = lambda x: int((x + 2 * padding - kernel_size) / stride) + 1
+        update_pool_size = lambda x: int((x - pool_kernel_size) / pool_kernel_size) + 1
+
+        for i, out_channels in enumerate(self.channels):
+            #conv
+            layers.append(nn.Conv2d(in_channels,out_channels, kernel_size,stride,padding)) #optional- add dilation
+            active_layer = nn.ReLU() if self.activation_type == "relu" else nn.LeakyReLU(**self.activation_params)
+            # activision
+            layers.append(active_layer)
+            # update feature size
+            in_h, in_w = update_conv_size(in_h), update_conv_size(in_w)
+            # pooling
+            if (i + 1) % self.pool_every == 0:
+                pool_layer = nn.MaxPool2d(p_kernel_size) if self.pooling_type == "max" else nn.AvgPool2d(p_kernel_size)
+                layers.append(pool_layer)
+                # update feature size
+                in_h,in_w = update_pool_size(in_h),update_pool_size(in_w)
+
+            in_channels = out_channels
+
+        self.n_features = in_channels * in_h * in_w
         # ========================
         seq = nn.Sequential(*layers)
         return seq
@@ -92,7 +129,7 @@ class ConvClassifier(nn.Module):
         rng_state = torch.get_rng_state()
         try:
             # ====== YOUR CODE: ======
-            raise NotImplementedError()
+            return self.n_features
             # ========================
         finally:
             torch.set_rng_state(rng_state)
@@ -107,7 +144,16 @@ class ConvClassifier(nn.Module):
         #  (FC -> ACT)*M -> Linear
         #  The last Linear layer should have an output dim of out_classes.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        num_of_features = self._n_features()
+        for dim in self.hidden_dims:
+
+            layers.append(nn.Linear(num_of_features, dim))
+            num_of_features = dim
+            if self.activation_type == "relu":
+                layers.append(nn.ReLU())
+            else:
+                layers.append(nn.LeakyReLU(**self.activation_params))
+        layers.append(nn.Linear(num_of_features, self.out_classes))
         # ========================
 
         seq = nn.Sequential(*layers)
@@ -118,7 +164,9 @@ class ConvClassifier(nn.Module):
         #  Extract features from the input, run the classifier on them and
         #  return class scores.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        features = self.feature_extractor(x)
+        features = features.reshape(features.size(0), -1)
+        out = self.classifier(features)
         # ========================
         return out
 
@@ -129,15 +177,15 @@ class ResidualBlock(nn.Module):
     """
 
     def __init__(
-        self,
-        in_channels: int,
-        channels: Sequence[int],
-        kernel_sizes: Sequence[int],
-        batchnorm: bool = False,
-        dropout: float = 0.0,
-        activation_type: str = "relu",
-        activation_params: dict = {},
-        **kwargs,
+            self,
+            in_channels: int,
+            channels: Sequence[int],
+            kernel_sizes: Sequence[int],
+            batchnorm: bool = False,
+            dropout: float = 0.0,
+            activation_type: str = "relu",
+            activation_params: dict = {},
+            **kwargs,
     ):
         """
         :param in_channels: Number of input channels to the first convolution.
@@ -194,11 +242,11 @@ class ResidualBottleneckBlock(ResidualBlock):
     """
 
     def __init__(
-        self,
-        in_out_channels: int,
-        inner_channels: Sequence[int],
-        inner_kernel_sizes: Sequence[int],
-        **kwargs,
+            self,
+            in_out_channels: int,
+            inner_channels: Sequence[int],
+            inner_kernel_sizes: Sequence[int],
+            **kwargs,
     ):
         """
         :param in_out_channels: Number of input and output channels of the block.
@@ -219,15 +267,15 @@ class ResidualBottleneckBlock(ResidualBlock):
 
 class ResNetClassifier(ConvClassifier):
     def __init__(
-        self,
-        in_size,
-        out_classes,
-        channels,
-        pool_every,
-        hidden_dims,
-        batchnorm=False,
-        dropout=0.0,
-        **kwargs,
+            self,
+            in_size,
+            out_classes,
+            channels,
+            pool_every,
+            hidden_dims,
+            batchnorm=False,
+            dropout=0.0,
+            **kwargs,
     ):
         """
         See arguments of ConvClassifier & ResidualBlock.
@@ -268,7 +316,6 @@ class YourCodeNet(ConvClassifier):
 
         # TODO: Add any additional initialization as needed.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
         # ========================
 
     # TODO: Change whatever you want about the ConvClassifier to try to
@@ -276,6 +323,5 @@ class YourCodeNet(ConvClassifier):
     #  For example, add batchnorm, dropout, skip connections, change conv
     #  filter sizes etc.
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
 
     # ========================
