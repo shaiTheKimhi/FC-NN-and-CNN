@@ -92,7 +92,7 @@ class ConvClassifier(nn.Module):
                 stride = self.conv_params['stride']
             if 'kernel_size' in self.conv_params.keys():
                 kernel_size = self.conv_params['kernel_size']
-        if type(self.pooling_params) is dict :
+        if type(self.pooling_params) is dict:
             if 'kernel_size' in self.pooling_params.keys():
                 pool_kernel_size = self.pooling_params['kernel_size']
 
