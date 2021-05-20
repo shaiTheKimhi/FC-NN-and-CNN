@@ -82,9 +82,9 @@ class ConvClassifier(nn.Module):
         in here, since we already iterate over the self.channels, thus
         i simply calculated the h,w and channels of each layer, and return the last one.
         """
-        # initiate as standart params:
+        # initiate as defult params:
         padding, stride, kernel_size, pool_kernel_size = 0, 1, 3, 2
-        #load params from dict:
+        #load params if needed:
         if 'padding' in self.conv_params.keys():
             padding = self.conv_params['padding']
         if 'stride' in self.conv_params.keys():
@@ -94,15 +94,15 @@ class ConvClassifier(nn.Module):
         if 'kernel_size' in self.pooling_params.keys():
             p_kernel_size = self.pooling_params['kernel_size']
 
-        #update the output_size regards to conv and pooling\
+        #define an update the output_size regards to conv and pooling functions
         update_conv_size = lambda x: int((x + 2 * padding - kernel_size) / stride) + 1
         update_pool_size = lambda x: int((x - pool_kernel_size) / pool_kernel_size) + 1
 
         for i, out_channels in enumerate(self.channels):
             #conv
             layers.append(nn.Conv2d(in_channels,out_channels, kernel_size,stride,padding)) #optional- add dilation
-            active_layer = nn.ReLU() if self.activation_type == "relu" else nn.LeakyReLU(**self.activation_params)
             # activision
+            active_layer = nn.ReLU() if self.activation_type == "relu" else nn.LeakyReLU(**self.activation_params)
             layers.append(active_layer)
             # update feature size
             in_h, in_w = update_conv_size(in_h), update_conv_size(in_w)
@@ -114,7 +114,6 @@ class ConvClassifier(nn.Module):
                 in_h,in_w = update_pool_size(in_h),update_pool_size(in_w)
 
             in_channels = out_channels
-
         self.n_features = in_channels * in_h * in_w
         # ========================
         seq = nn.Sequential(*layers)
@@ -164,9 +163,9 @@ class ConvClassifier(nn.Module):
         #  Extract features from the input, run the classifier on them and
         #  return class scores.
         # ====== YOUR CODE: ======
-        features = self.feature_extractor(x)
-        features = features.reshape(features.size(0), -1)
-        out = self.classifier(features)
+        features = self.feature_extractor(x) #forward conv
+        features = features.reshape(features.size(0), -1) #flatten
+        out = self.classifier(features) #classifier (usually FC)
         # ========================
         return out
 
@@ -226,7 +225,40 @@ class ResidualBlock(nn.Module):
         #  - Don't create layers which you don't use! This will prevent
         #    correct comparison in the test.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        main_path_layers = []
+        # dims = []
+        # in_w = 0
+        # in_h = 0
+
+        curr_in_channels = in_channels
+
+        # block layers
+        for i, channel in enumerate(channels[:-1]):
+            main_path_layers.append(nn.Conv2d(in_channels=curr_in_channels, out_channels=channel,
+                                         kernel_size=kernel_sizes[i], padding=int((kernel_sizes[i] - 1) / 2)))
+            if dropout > 0:
+                main_path_layers.append(nn.Dropout2d(dropout))
+
+            if batchnorm:
+                main_path_layers.append(nn.BatchNorm2d(channel))
+
+            if activation_type == "relu":
+                main_path_layers.append(nn.ReLU())
+            else:
+                main_path_layers.append(nn.LeakyReLU(**activation_params))
+
+            curr_in_channels = channel
+
+        main_path_layers.append(nn.Conv2d(in_channels=curr_in_channels, out_channels=channels[-1],
+                                     kernel_size=kernel_sizes[-1], padding=int((kernel_sizes[-1] - 1) / 2)))
+
+        shortcut = nn.Sequential()
+        # skip connection using 1x1 kernel
+        if in_channels != channels[-1]:
+            shortcut = nn.Sequential(nn.Conv2d(in_channels, channels[-1], kernel_size=1, bias=False))
+
+        self.main_path = nn.Sequential(*main_path_layers)
+        self.shortcut_path = shortcut
         # ========================
 
     def forward(self, x):
