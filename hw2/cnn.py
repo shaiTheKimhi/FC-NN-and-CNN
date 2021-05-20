@@ -83,9 +83,17 @@ class ConvClassifier(nn.Module):
         i simply calculated the h,w and channels of each layer, and return the last one.
         """
         # initiate as defult params:
-        padding, stride, kernel_size, pool_kernel_size = 0, 1, 3, 2
+        '''padding, stride, kernel_size, pool_kernel_size = 0, 1, 3, 2'''
         #load params if needed:
-        if type(self.conv_params) is dict:
+        names = ['padding', 'stride', 'kernel_size', 'Pkernel_size']
+        values = [0, 1, 3, 2]
+        for k in names:
+            if type(self.conv_params) is dict and k in self.conv_params.keys():
+                values[names.index(k)] = self.conv_params[k]
+            if type(self.pooling_params) is dict and k[1:] in self.pooling_params.keys():
+                values[names.index(k)] = self.pooling_params[k[1:]]
+        padding,stride,kernel_size,pool_kernel_size = tuple(values)
+        '''if type(self.conv_params) is dict:
             if 'padding' in self.conv_params.keys():
                 padding = self.conv_params['padding']
             if 'stride' in self.conv_params.keys():
@@ -94,7 +102,7 @@ class ConvClassifier(nn.Module):
                 kernel_size = self.conv_params['kernel_size']
         if type(self.pooling_params) is dict:
             if 'kernel_size' in self.pooling_params.keys():
-                pool_kernel_size = self.pooling_params['kernel_size']
+                pool_kernel_size = self.pooling_params['kernel_size']'''
 
         #define an update the output_size regards to conv and pooling functions
         update_conv_size = lambda x: int((x + 2 * padding - kernel_size) / stride) + 1
@@ -118,61 +126,6 @@ class ConvClassifier(nn.Module):
             in_channels = out_channels
         self.n_features = in_channels * in_h * in_w
 
-
-
-
-        """channels = self.channels
-
-        # For dimension calculations
-        self.class_in_h, self.class_in_w = in_h, in_w
-        padding = 0
-        if type(self.conv_params) is dict and 'padding' in self.conv_params.keys():
-            padding = self.conv_params['padding']
-
-        stride = 1
-        if type(self.conv_params) is dict and 'stride' in self.conv_params.keys():
-            stride = self.conv_params['stride']
-
-        kernel_size = 3
-        if type(self.conv_params) is dict and 'kernel_size' in self.conv_params.keys():
-            kernel_size = self.conv_params['kernel_size']
-
-        pool_kernel_size = 2
-        if type(self.pooling_params) is dict and 'kernel_size' in self.pooling_params.keys():
-            pool_kernel_size = self.pooling_params['kernel_size']
-
-        lrelu_slope = 0
-        if type(self.activation_params) is dict and 'negative_slope' in self.pooling_params.keys():
-            lrelu_slope = self.pooling_params['negative_slope']
-
-        # Iterating over feature channels
-        for i in range(len(channels)):
-
-            # calculate class input dimensions
-            self.class_in_h = int((self.class_in_h + 2 * padding - kernel_size) / stride) + 1
-            self.class_in_w = int((self.class_in_w + 2 * padding - kernel_size) / stride) + 1
-
-            layers.append(nn.Conv2d(in_channels=in_channels, out_channels=channels[i], kernel_size=kernel_size,
-                                    padding=padding, stride=stride))
-            # activation type
-            if self.activation_type == "relu":
-                layers.append(nn.ReLU())
-            else:
-                layers.append(nn.LeakyReLU(**self.activation_params))
-            # pool every P times
-            if (i + 1) % self.pool_every == 0:
-
-                # Calculating dims with regards to pooling
-                self.class_in_h = int((self.class_in_h - pool_kernel_size) / pool_kernel_size) + 1
-                self.class_in_w = int((self.class_in_w - pool_kernel_size) / pool_kernel_size) + 1
-
-                if (self.pooling_type == "max"):
-                    layers.append(nn.MaxPool2d(pool_kernel_size))
-                else:
-                    layers.append(nn.AvgPool2d(pool_kernel_size))
-
-            in_channels = channels[i]
-        self.n_features = in_channels * self.class_in_h * self.class_in_w"""
         # ========================
         seq = nn.Sequential(*layers)
         return seq
