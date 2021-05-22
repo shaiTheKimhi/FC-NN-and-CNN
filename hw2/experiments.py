@@ -77,7 +77,35 @@ def run_experiment(
     #   for you automatically.
     fit_res = None
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    ######################
+    num_classes = 10
+    loss_fn = torch.nn.CrossEntropyLoss().to(device)
+
+    channels = [f for f in filters_per_layer for i in range(layers_per_block)]
+    my_args = dict(conv_params=dict(kernel_size=3, stride=1, padding=1), pooling_params=dict(kernel_size=2, stride=2, padding=1))
+    my_model = model_cls(in_size=ds_train[0][0].shape, out_classes=num_classes, channels=channels, pool_every=pool_every, hidden_dims=hidden_dims, **my_args).to(device)
+
+    opt = torch.optim.Adam(params=my_model.parameters(), lr=lr, weight_decay=reg)
+    train_ing = training.TorchTrainer(my_model, loss_fn, opt, device)
+    dl_train = DataLoader(ds_train, bs_train, shuffle=True)
+    dl_test = DataLoader(ds_test, bs_test, shuffle=False)
+    fit_res = train_ing.fit(dl_train, dl_test, num_epochs=epochs, checkpoints=checkpoints, early_stopping=early_stopping, **kw)
+    ######################
+    '''x, _ = ds_train[0]
+
+    channels = []
+    for channel in filters_per_layer:
+        channels.extend([channel] * layers_per_block)
+
+    model = model_cls(in_size=x.shape, out_classes=10, channels=channels, pool_every=pool_every,
+                      hidden_dims=hidden_dims, **kw).to(device)
+    loss = torch.nn.CrossEntropyLoss().to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=reg)
+    trainer = training.TorchTrainer(model, loss, optimizer, device)
+    fit_res = trainer.fit(dl_train=DataLoader(ds_train, batch_size=bs_train), dl_test=DataLoader(ds_test, batch_size=bs_test), early_stopping=early_stopping, num_epochs=epochs, max_batches=batches)
+    '''
+
+
     # ========================
 
     save_experiment(run_name, out_dir, cfg, fit_res)

@@ -332,23 +332,21 @@ class ResNetClassifier(ConvClassifier):
         #  - Use your own ResidualBlock implementation.
         # ====== YOUR CODE: ======
         num_blocks = int(len(self.channels) / self.pool_every)
-        reminder = False
-        if len(self.channels) % self.pool_every != 0:
-            reminder = True
-
-        update_pool_size = lambda x: int((x - 3) / 3) + 1 #kernel size set to 3
+        update_pool_size = lambda x: int((x - 2) / 2) + 1 #pool kernel size set to 2
 
         p = self.pool_every
         n = len(self.channels)
         for i in range(num_blocks):
-            layers.append(ResidualBlock(in_channels, self.channels[i*p : (i+1)*p] + [in_channels], [3]*p + [1], self.batchnorm, self.dropout, self.activation_type, self.activation_params))
+            layers.append(ResidualBlock(in_channels, self.channels[i*p : (i+1)*p] , [3]*p, self.batchnorm, self.dropout, self.activation_type, self.activation_params))
             if self.pooling_type == "avg":
-                pool_layer = nn.MaxPool2d(3) if self.pooling_type == "max" else nn.AvgPool2d(3)  ##kernel size set to 3
+                pool_layer = nn.MaxPool2d(2) if self.pooling_type == "max" else nn.AvgPool2d(2)  ##pool kernel size set to 2
                 layers.append(pool_layer)
                 in_h, in_w = update_pool_size(in_h), update_pool_size(in_w)
+            in_channels = self.channels[(i+1)*p - 1]
 
-        layers.append(ResidualBlock(in_channels, self.channels[-(n%p):] + [in_channels], [3]*(n%p) + [1], self.batchnorm, self.dropout, self.activation_type, self.activation_params))
-
+        if n%p != 0:
+            layers.append(ResidualBlock(in_channels, self.channels[-(n%p):], [3]*(n%p) , self.batchnorm, self.dropout, self.activation_type, self.activation_params))
+            in_channels = self.channels[-1]
 
         self.n_features = in_channels * in_h * in_w
         # ========================
