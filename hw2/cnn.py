@@ -93,16 +93,7 @@ class ConvClassifier(nn.Module):
             if type(self.pooling_params) is dict and k[1:] in self.pooling_params.keys():
                 values[names.index(k)] = self.pooling_params[k[1:]]
         padding,stride,kernel_size,pool_kernel_size = tuple(values)
-        '''if type(self.conv_params) is dict:
-            if 'padding' in self.conv_params.keys():
-                padding = self.conv_params['padding']
-            if 'stride' in self.conv_params.keys():
-                stride = self.conv_params['stride']
-            if 'kernel_size' in self.conv_params.keys():
-                kernel_size = self.conv_params['kernel_size']
-        if type(self.pooling_params) is dict:
-            if 'kernel_size' in self.pooling_params.keys():
-                pool_kernel_size = self.pooling_params['kernel_size']'''
+
 
         #define an update the output_size regards to conv and pooling functions
         update_conv_size = lambda x: int((x + 2 * padding - kernel_size) / stride) + 1
@@ -159,10 +150,8 @@ class ConvClassifier(nn.Module):
 
             layers.append(nn.Linear(num_of_features, dim))
             num_of_features = dim
-            if self.activation_type == "relu":
-                layers.append(nn.ReLU())
-            else:
-                layers.append(nn.LeakyReLU(**self.activation_params))
+            active_layer = nn.ReLU() if self.activation_type == "relu" else nn.LeakyReLU(**self.activation_params)
+            layers.append(active_layer)
         layers.append(nn.Linear(num_of_features, self.out_classes))
         # ========================
 
@@ -236,39 +225,32 @@ class ResidualBlock(nn.Module):
         #  - Don't create layers which you don't use! This will prevent
         #    correct comparison in the test.
         # ====== YOUR CODE: ======
-        main_path_layers = []
-        # dims = []
-        # in_w = 0
-        # in_h = 0
+        main_layers = []
 
         curr_in_channels = in_channels
 
         # block layers
-        for i, channel in enumerate(channels[:-1]):
-            main_path_layers.append(nn.Conv2d(in_channels=curr_in_channels, out_channels=channel,
+        for i, channel in enumerate(channels):
+            main_layers.append(nn.Conv2d(in_channels=curr_in_channels, out_channels=channel,
                                          kernel_size=kernel_sizes[i], padding=int((kernel_sizes[i] - 1) / 2)))
+            if i == len(channels) - 1:
+                break
             if dropout > 0:
-                main_path_layers.append(nn.Dropout2d(dropout))
+                main_layers.append(nn.Dropout2d(dropout))
 
             if batchnorm:
-                main_path_layers.append(nn.BatchNorm2d(channel))
-
-            if activation_type == "relu":
-                main_path_layers.append(nn.ReLU())
-            else:
-                main_path_layers.append(nn.LeakyReLU(**activation_params))
+                main_layers.append(nn.BatchNorm2d(channel))
+            active_layer = nn.ReLU() if activation_type == "relu" else nn.LeakyReLU(**activation_params)
+            main_layers.append(active_layer)
 
             curr_in_channels = channel
-
-        main_path_layers.append(nn.Conv2d(in_channels=curr_in_channels, out_channels=channels[-1],
-                                     kernel_size=kernel_sizes[-1], padding=int((kernel_sizes[-1] - 1) / 2)))
 
         shortcut = nn.Sequential()
         # skip connection using 1x1 kernel
         if in_channels != channels[-1]:
             shortcut = nn.Sequential(nn.Conv2d(in_channels, channels[-1], kernel_size=1, bias=False))
 
-        self.main_path = nn.Sequential(*main_path_layers)
+        self.main_path = nn.Sequential(*main_layers)
         self.shortcut_path = shortcut
         # ========================
 
@@ -304,7 +286,12 @@ class ResidualBottleneckBlock(ResidualBlock):
         :param kwargs: Any additional arguments supported by ResidualBlock.
         """
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        channels = [inner_channels[0]] + list(inner_channels)
+        channels.append(in_out_channels)
+        kernel_size = [1] + list(inner_kernel_sizes)
+        kernel_size.append(1)
+
+        super().__init__(in_out_channels, channels, kernel_size, **kwargs)
         # ========================
 
 
@@ -344,7 +331,26 @@ class ResNetClassifier(ConvClassifier):
         #    without a POOL after them.
         #  - Use your own ResidualBlock implementation.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        num_blocks = int(len(self.channels) / self.pool_every)
+        reminder = False
+        if len(self.channels) % self.pool_every != 0:
+            reminder = True
+
+        update_pool_size = lambda x: int((x - 3) / 3) + 1 #kernel size set to 3
+
+        p = self.pool_every
+        n = len(self.channels)
+        for i in range(num_blocks):
+            layers.append(ResidualBlock(in_channels, self.channels[i*p : (i+1)*p] + [in_channels], [3]*p + [1], self.batchnorm, self.dropout, self.activation_type, self.activation_params))
+            if self.pooling_type == "avg":
+                pool_layer = nn.MaxPool2d(3) if self.pooling_type == "max" else nn.AvgPool2d(3)  ##kernel size set to 3
+                layers.append(pool_layer)
+                in_h, in_w = update_pool_size(in_h), update_pool_size(in_w)
+
+        layers.append(ResidualBlock(in_channels, self.channels[-(n%p):] + [in_channels], [3]*(n%p) + [1], self.batchnorm, self.dropout, self.activation_type, self.activation_params))
+
+
+        self.n_features = in_channels * in_h * in_w
         # ========================
         seq = nn.Sequential(*layers)
         return seq
