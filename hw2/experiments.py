@@ -90,20 +90,6 @@ def run_experiment(
     dl_train = DataLoader(ds_train, bs_train, shuffle=True)
     dl_test = DataLoader(ds_test, bs_test, shuffle=False)
     fit_res = train_ing.fit(dl_train, dl_test, num_epochs=epochs, checkpoints=checkpoints, early_stopping=early_stopping, **kw)
-    ######################
-    '''x, _ = ds_train[0]
-
-    channels = []
-    for channel in filters_per_layer:
-        channels.extend([channel] * layers_per_block)
-
-    model = model_cls(in_size=x.shape, out_classes=10, channels=channels, pool_every=pool_every,
-                      hidden_dims=hidden_dims, **kw).to(device)
-    loss = torch.nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=reg)
-    trainer = training.TorchTrainer(model, loss, optimizer, device)
-    fit_res = trainer.fit(dl_train=DataLoader(ds_train, batch_size=bs_train), dl_test=DataLoader(ds_test, batch_size=bs_test), early_stopping=early_stopping, num_epochs=epochs, max_batches=batches)
-    '''
 
 
     # ========================

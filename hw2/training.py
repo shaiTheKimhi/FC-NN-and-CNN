@@ -101,11 +101,13 @@ class Trainer(abc.ABC):
             epochs_without_improvement += 1
 
             # Checkpoint
-            if checkpoints and test_epoch_result.accuracy > best_acc: #last better then best
-                torch.save(self.model, checkpoints)
-                best_acc = test_epoch_result.accuracy
-                epochs_without_improvement = 0 #reset no improvement
-
+            if test_epoch_result.accuracy > best_acc:
+                epochs_without_improvement = 0
+                best_acc = test_epoch_result.accuracy #reset no improvement
+                if checkpoints:  #last better then best
+                    torch.save(self.model, checkpoints)
+                
+       
             # Early stopping
             if early_stopping:
                 if epochs_without_improvement >= early_stopping:
@@ -273,9 +275,12 @@ class TorchTrainer(Trainer):
         #  - Optimize params
         #  - Calculate number of correct predictions
         # ====== YOUR CODE: ======
+        
+   
+        
         preds = self.model(X) #Forward- vec of scores
-        loss = self.loss_fn(preds, y)
         self.optimizer.zero_grad()
+        loss = self.loss_fn(preds, y)
         loss.backward()
         self.optimizer.step()
 
