@@ -95,15 +95,21 @@ in that case $\^{Y} = 0 $ so we increase accuracy measure, but loss would be -lo
 # Part 3 answers
 
 part3_q1 = r"""
-**Your answer:**
+
+1. Number of parameters: <br\> 
+Regular block: 2 conv layers, each one has kernel size 3X3 with 256 input channels and 256 output channels thus, number of parameters is $2\times 3^2\times256^2$ = `1,179,648`
+Bottleneck block: first convolution has 1X1 kernel from 256 channels to 64, second kernel has 3X3 kernel with input 64 and output 64 channels and last convolution has 1X1 kernel from 64 channels to 256. Thus, total number of parameters is $256\times 64 + 3^2 \times 64^2 + 64\times 256=$ `69,632`.
+Bottleneck has much fewer parameters
+
+2.Number of Operations: <br\>
+Let N be input image size ($W\times H$)
+Regular blocks: for each 3X3 convolution number of operations is $OP=N\times 256\times (3^2+1) \times 256$ total number of operations is $2\times OP+N\times 256=$ `1,310,976N`
+note: we count the summary of each kernel multiplication as one operation.
+Bottleneck block: 1X1 convolution takes $O1=N\times 256\times (1^2+1)\times 64$ opreations, 3X3 convolution takes $O2=N\times 64\times (3^2+1) \times 64$ total number of operations is: $2\times O1+O2+256N$ = `102,656N`
+
+3.
 
 
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
 
 """
 

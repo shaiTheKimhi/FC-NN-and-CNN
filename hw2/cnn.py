@@ -248,7 +248,10 @@ class ResidualBlock(nn.Module):
         shortcut = nn.Sequential()
         # skip connection using 1x1 kernel
         if in_channels != channels[-1]:
-            shortcut = nn.Sequential(nn.Conv2d(in_channels, channels[-1], kernel_size=1, bias=False))
+            slayers = [nn.Conv2d(in_channels, channels[-1], kernel_size=1, bias=False)]
+            if batchnorm:
+                slayers.append(nn.BatchNorm2d(channel))
+            shortcut = nn.Sequential(*slayers)
 
         self.main_path = nn.Sequential(*main_layers)
         self.shortcut_path = shortcut
@@ -368,14 +371,15 @@ class ResNetClassifier(ConvClassifier):
 
 
 class YourCodeNet(ConvClassifier):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, in_size, out_classes,*args, **kwargs):
         """
         See ConvClassifier.__init__
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(in_size, out_classes, *args, **kwargs)
 
         # TODO: Add any additional initialization as needed.
         # ====== YOUR CODE: ======
+        self.batchnorm = True
         # ========================
 
     # TODO: Change whatever you want about the ConvClassifier to try to
@@ -383,5 +387,46 @@ class YourCodeNet(ConvClassifier):
     #  For example, add batchnorm, dropout, skip connections, change conv
     #  filter sizes etc.
     # ====== YOUR CODE: ======
+    def _make_feature_extractor(self):
+        in_channels, in_h, in_w, = tuple(self.in_size)
 
+        layers = []
+        self.batchnorm = True
+        self.dropout = 0.3
+        self.activation_type = "relu"
+        
+        self.activation_params["negative_slope"] = 0.05
+        print((self.activation_params))
+        
+        
+        '''
+            curr_channels = channels[(len(channels) - len(channels)%self.pool_every):]
+            '''
+        #######
+        pool_size = self.pooling_params.get("kernel_size", 2)# if "kernel_size" in self.pooling.params.keys() else 2
+        pool_pad = self.pooling_params.get("padding", 0)
+        pool_stride = self.pooling_params.get("stride", pool_size)
+        ###
+        
+        num_blocks = int(len(self.channels) / self.pool_every)
+        update_pool_size = lambda x: int((x - pool_size) / pool_size) + 1 #pool kernel size set to 2
+
+        p = self.pool_every
+        n = len(self.channels)
+        for i in range(num_blocks):
+            layers.append(ResidualBlock(in_channels, self.channels[i*p : (i+1)*p] , [3]*p, self.batchnorm, self.dropout, self.activation_type, self.activation_params))
+            
+            pool_layer = nn.MaxPool2d(pool_size) if self.pooling_type == "max" else nn.AvgPool2d(pool_size)  ##pool kernel size set to 2
+            layers.append(pool_layer)
+            in_h, in_w = update_pool_size(in_h), update_pool_size(in_w)
+            in_channels = self.channels[(i+1)*p - 1]
+
+        if n%p != 0:
+            layers.append(ResidualBlock(in_channels, self.channels[-(n%p):], [3]*(n%p) , self.batchnorm, self.dropout, self.activation_type, self.activation_params))
+            in_channels = self.channels[-1]
+
+        self.n_features = in_channels * in_h * in_w
+        # ========================
+        seq = nn.Sequential(*layers)
+        return seq
     # ========================
