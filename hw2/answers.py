@@ -114,41 +114,21 @@ Bottleneck block: 1X1 convolution takes $O1=N\times 256\times (1^2+1)\times 64$ 
 """
 
 part3_q2 = r"""
-**Your answer:**
-
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
-
+Experiment 1.1 shows that larger depth could increase the expressive power of the feature extractor of the model, for instance from 2 layers to 4 we get an improvement in the achieved model accuracy.
+Yet, the experiment also shows that for a large number of layers (8 or 16 in that experiment) we might not be able to train the model correctly, as the layers reduced the dimension
+of the input to a too low dimension which the linear classifier could not get useful enough information from that latent space, thus the model was untrainable.
 """
 
 part3_q3 = r"""
-**Your answer:**
-
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
-
+Experiment 1.2 shows that for sufficient amount of layers 4 in our experiment, 256 filters per layer was optimal which is the maximum number in our experiment,
+for a smaller number of layers, the optimal number of filters is smaller, that could be since for smaller number of layers, the output of the convolutional sequence is of
+a larger size, for a large number of features that creates a too large output which is harder for the linear calssifier to learn, that is similar to previous experiment as too many layers 
+does not allow convergance on the training set, the size of the output of the convolutional part needs not to be too high and not too low.
 """
 
 part3_q4 = r"""
-**Your answer:**
-
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
+Experiment 1.3 shows that the network converges only for 2 layers, as each layer includes 3 convolutions, thus 2 layers are almost equivalent to 6 layers of single convolution each.
+This explains why 4 and 8 does not allow for the linear classifier to be able to converge on the training set.
 
 """
 
