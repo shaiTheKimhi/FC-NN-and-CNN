@@ -10,7 +10,6 @@ POOLINGS = {"avg": nn.AvgPool2d, "max": nn.MaxPool2d}
 class ConvClassifier(nn.Module):
     """
     A convolutional classifier model based on PyTorch nn.Modules.
-
     The architecture is:
     [(CONV -> ACT)*P -> POOL]*(N/P) -> (FC -> ACT)*M -> FC
     """
@@ -248,10 +247,7 @@ class ResidualBlock(nn.Module):
         shortcut = nn.Sequential()
         # skip connection using 1x1 kernel
         if in_channels != channels[-1]:
-            slayers = [nn.Conv2d(in_channels, channels[-1], kernel_size=1, bias=False)]
-            if batchnorm:
-                slayers.append(nn.BatchNorm2d(channel))
-            shortcut = nn.Sequential(*slayers)
+            shortcut = nn.Sequential(nn.Conv2d(in_channels, channels[-1], kernel_size=1, bias=False))
 
         self.main_path = nn.Sequential(*main_layers)
         self.shortcut_path = shortcut
@@ -298,10 +294,6 @@ class ResidualBottleneckBlock(ResidualBlock):
         # ========================
 
 
-ACTIVATIONS = {"relu": nn.ReLU, "lrelu": nn.LeakyReLU}
-POOLINGS = {"avg": nn.AvgPool2d, "max": nn.MaxPool2d}
-
-        
 class ResNetClassifier(ConvClassifier):
     def __init__(
             self,
@@ -338,26 +330,17 @@ class ResNetClassifier(ConvClassifier):
         #    without a POOL after them.
         #  - Use your own ResidualBlock implementation.
         # ====== YOUR CODE: ======
-        '''
-            curr_channels = channels[(len(channels) - len(channels)%self.pool_every):]
-            '''
-        #######
-        pool_size = self.pooling_params["kernel_size"]
-        pool_pad = self.pooling_params.get("padding", 0)
-        pool_stride = self.pooling_params.get("stride", pool_size)
-        ###
-        
         num_blocks = int(len(self.channels) / self.pool_every)
-        update_pool_size = lambda x: int((x - pool_size) / pool_size) + 1 #pool kernel size set to 2
+        update_pool_size = lambda x: int((x - 2) / 2) + 1 #pool kernel size set to 2
 
         p = self.pool_every
         n = len(self.channels)
         for i in range(num_blocks):
             layers.append(ResidualBlock(in_channels, self.channels[i*p : (i+1)*p] , [3]*p, self.batchnorm, self.dropout, self.activation_type, self.activation_params))
-            
-            pool_layer = nn.MaxPool2d(pool_size) if self.pooling_type == "max" else nn.AvgPool2d(pool_size)  ##pool kernel size set to 2
-            layers.append(pool_layer)
-            in_h, in_w = update_pool_size(in_h), update_pool_size(in_w)
+            if self.pooling_type == "avg":
+                pool_layer = nn.MaxPool2d(2) if self.pooling_type == "max" else nn.AvgPool2d(2)  ##pool kernel size set to 2
+                layers.append(pool_layer)
+                in_h, in_w = update_pool_size(in_h), update_pool_size(in_w)
             in_channels = self.channels[(i+1)*p - 1]
 
         if n%p != 0:
@@ -368,7 +351,6 @@ class ResNetClassifier(ConvClassifier):
         # ========================
         seq = nn.Sequential(*layers)
         return seq
-
 
 class YourCodeNet(ConvClassifier):
     def __init__(self, in_size, out_classes,*args, **kwargs):
