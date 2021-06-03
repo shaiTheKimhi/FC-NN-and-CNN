@@ -107,54 +107,53 @@ Regular blocks: for each 3X3 convolution number of operations is $OP=N\times 256
 note: we count the summary of each kernel multiplication as one operation.
 Bottleneck block: 1X1 convolution takes $O1=N\times 256\times (1^2+1)\times 64$ opreations, 3X3 convolution takes $O2=N\times 64\times (3^2+1) \times 64$ total number of operations is: $2\times O1+O2+256N$ = `102,656N`
 
-3.
-
-
-
+3. The bottleneck receptive field is $3\times3$, while the regular block has 2 $3\times3$ convs, thus the receptive field is $5\times5$.
+Across feature maps,both uses all input channels, and that is why both combine the channels  onto a given spatial area.
 """
 
 part3_q2 = r"""
-Experiment 1.1 shows that larger depth could increase the expressive power of the feature extractor of the model, for instance from 2 layers to 4 we get an improvement in the achieved model accuracy.
-Yet, the experiment also shows that for a large number of layers (8 or 16 in that experiment) we might not be able to train the model correctly, as the layers reduced the dimension
-of the input to a too low dimension which the linear classifier could not get useful enough information from that latent space, thus the model was untrainable.
+Experiment 1.1 shows that larger depth **could increase** the expressive power of the feature extractor of the model (from 2 layers to 4, we get an improvement of accuracy).
+Yet, the experiment also shows that for a large number of layers (8 or 16 in that experiment) **could decrease** the accuracy.
+That phenomanan could happen for several reasons, One might be that each conv layer reduced the dimension of the input, and the features become too small to learn from.
+Second reason could be that a network that is too long, suffer from vanishing gradients, since it has more layers to go throw.
+Another reason could be that after several layers, we already extracted the right features, and more conv layers "ruined" the features, since as we learned in the tutorials, learning the identity function without residual might be hard.
+To fix that problem, we can use skip connections, as we use in residual, that could solve the vanishing gradients for instanse.
+We can also use padding to keep the features of each layer at the same size to avoid the first mentioned problem (or use less pooling layers).
 """
 
 part3_q3 = r"""
-Experiment 1.2 shows that for sufficient amount of layers 4 in our experiment, 256 filters per layer was optimal which is the maximum number in our experiment,
-for a smaller number of layers, the optimal number of filters is smaller, that could be since for smaller number of layers, the output of the convolutional sequence is of
+Experiment 1.2 shows that for sufficient amount of layers (4, corrolated with exp 1.1), 256 filters per layer preformed optimally,
+for 2 layers, the optimal number of filters is smaller, 
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx FILL LATER
+that could be since for smaller number of layers, the output of the convolutional sequence is of
 a larger size, for a large number of features that creates a too large output which is harder for the linear calssifier to learn, that is similar to previous experiment as too many layers 
 does not allow convergance on the training set, the size of the output of the convolutional part needs not to be too high and not too low.
 """
 
 part3_q4 = r"""
-Experiment 1.3 shows that the network converges only for 2 layers, as each layer includes 3 convolutions, thus 2 layers are almost equivalent to 6 layers of single convolution each.
-This explains why 4 and 8 does not allow for the linear classifier to be able to converge on the training set.
-
+Experiment 1.3 creats an architecture of L layers 3 times (2 for each k in K),i.e, we get 3L conv layers.
+We already saw in previus experiments that cnn network does not preform well for this problem with deep architecture (as sugested in q3.2).
+2 phenomanas that we see is:
+1. L=2 get good results (since the network is not too deep).
+2. increasing the number of features gradualy, works better then a direct channel lifting (i.e- 3-64-128-256 works better then 3-256-256-256).
 """
 
 part3_q5 = r"""
-**Your answer:**
+First thing that is obvios to mention, is that Resnet architecture, that use the skip connections, solve part of the vanishing gradients problem we mentioned in 1.1.
+for that reason, we can use deeper networks and from the results of 1.2, deeper networks can use more features.
+We still notice that too deep of a network does not learn the best, and L=4 for the K=[64,128,256] preform the best. but that could point the first problem we mentioned of feature size
+(when using less pooling and padding for same size convs, the deeper model with L=8 can outpreform  the L=4).
+in general, we see that the total accuracy is higher (regardless every analysis of the graph phenomanons).
 
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
 
 """
 
 part3_q6 = r"""
-**Your answer:**
-
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
-
+Our model is based on Resnet with several times useage of bottelneck, dropout of 0.4, relu activisions and expiroments with increasing and increase-decrease number of channels
+We tried to combine all that we learned from the previus models about complexity, non-vanishing gradients, number of features and feature size (less pooling).
+we also tried diffrent activision functions but with no much sucsess.
+Another diffrence is that we tried an idea similar to bottleneck as well.
+since the last part of exp 1 got a fine result, our result is not much better then that.
+we mostly tried to get the notion behind resnet18 that reach good results and very similar to what we already ran, since without augmentations we found that it's very hard to beat the 85% accuracy.
 """
 # ==============
