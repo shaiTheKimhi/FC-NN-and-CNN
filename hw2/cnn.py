@@ -81,18 +81,10 @@ class ConvClassifier(nn.Module):
         in here, since we already iterate over the self.channels, thus
         i simply calculated the h,w and channels of each layer, and return the last one.
         """
-        # initiate as defult params:
-        '''padding, stride, kernel_size, pool_kernel_size = 0, 1, 3, 2'''
-        #load params if needed:
-        names = ['padding', 'stride', 'kernel_size', 'Pkernel_size']
-        values = [0, 1, 3, 2]
-        for k in names:
-            if type(self.conv_params) is dict and k in self.conv_params.keys():
-                values[names.index(k)] = self.conv_params[k]
-            if type(self.pooling_params) is dict and k[1:] in self.pooling_params.keys():
-                values[names.index(k)] = self.pooling_params[k[1:]]
-        padding,stride,kernel_size,pool_kernel_size = tuple(values)
-
+        padding = self.conv_params.get('padding',0)
+        stride = self.conv_params.get('stride',1)
+        kernel_size = self.conv_params.get('kernel_size',3)
+        pool_kernel_size = self.pooling_params.get("kernel_size", 2)
 
         #define an update the output_size regards to conv and pooling functions
         update_conv_size = lambda x: int((x + 2 * padding - kernel_size) / stride) + 1

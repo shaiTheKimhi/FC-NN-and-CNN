@@ -149,11 +149,12 @@ in general, we see that the total accuracy is higher (regardless every analysis 
 """
 
 part3_q6 = r"""
-Our model is based on Resnet with several times useage of bottelneck, dropout of 0.4, relu activisions and expiroments with increasing and increase-decrease number of channels
-We tried to combine all that we learned from the previus models about complexity, non-vanishing gradients, number of features and feature size (less pooling).
-we also tried diffrent activision functions but with no much sucsess.
-Another diffrence is that we tried an idea similar to bottleneck as well.
-since the last part of exp 1 got a fine result, our result is not much better then that.
-we mostly tried to get the notion behind resnet18 that reach good results and very similar to what we already ran, since without augmentations we found that it's very hard to beat the 85% accuracy.
+Our model is based on Resnet with several architecture changes, dropout of 0.4, relu activisions and expiroments with **Gradual ascent** and **Gradual ascent-gradual descent** in the number of channels.
+We tried to combine all that we learned from the previus models in this HW: in the manner of model complexity, non-vanishing gradients, number of features and feature size (less pooling_every since we use deeper models).
+We also tried diffrent activision functions but with no much sucsess to beat the Relu.
+**Gradual ascent-gradual descent** architecture is an idea in the notion of bottleneck and worked pretty well for us (better then using bottelneck residual as is).
+Since the last part of exp 1 got a fine result, our result is not much better then that and achive ~79 percent, as opposed to 75 in part 1.4/ 
+The idea in some of the expirements was to imitate the resnet18 architecture.
+Note that in the SOTA papers on this dataset, all use data augmentations and we think that our result don't progress much since we didn't change the data.
 """
 # ==============

@@ -26,7 +26,7 @@ for k in K:
         )
 """
 
-#experiment 1.3
+"""#experiment 1.3
 k = [64,128,256]
 L = [1]#,2,3,4]
 for l in L:
@@ -37,7 +37,7 @@ for l in L:
         model_type='cnn',
     )
 
-"""#experiment 1.4
+#experiment 1.4
 k = [32]
 L = [8,16,32]
 for l in L:
@@ -56,15 +56,15 @@ for l in L:
             filters_per_layer=k, layers_per_block=l, pool_every=pool_every, hidden_dims=[100],
             model_type='resnet',
         )
-"""
 
-"""#exp2
+"""
+#exp2
 K = [[64,128,256,512],[32,64,128,256],[64,128,256,128,64],[32],[64],[128],[256]]
 L = [2,4,8]
 for l in L:
     for k in K:
         pool_every = 5 if l < 8 else 10
         experiments.run_experiment(
-                'exp1_4', seed=seed, bs_train=50, batches=10, epochs=10, early_stopping=5,
+                'exp2', seed=seed, bs_train=16, batches=8, epochs=10, early_stopping=5,
                 filters_per_layer=k, layers_per_block=l, pool_every=pool_every, hidden_dims=[100],
-                model_type='ycn',)"""
+                model_type='ycn',)
